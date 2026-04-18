@@ -1,0 +1,56 @@
+scene
+ fun
+  select
+  move
+  use
+  say
+  fight
+ prog
+  act_1_island
+   selector
+   mover
+   gear_up
+ price
+  banana_11
+  shirt_111
+
+
+ seq
+  Alph: let's explore
+  Alph: let's buy some stuff
+
+
+ time_autumn_day
+ city
+  district
+   street
+    block
+     flat
+      room
+ island
+  cli_monsoon
+  env_clear
+  beach
+   bike~Ven
+   house
+    banana fruit_30
+    bag
+     pants~Ven
+      sell_111
+     shirt~Ven
+      sell_123
+    Ven
+     pants
+     shirt
+  grove
+   stick
+   palm_99
+   grass_999
+   banana_3
+   beast
+    stick_+
+  Alph_p
+  Best_p
+   "Hi!
+  Nar
+  coin
