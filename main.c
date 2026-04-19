@@ -7,16 +7,20 @@
 #define cyan (struct color){0,255,255,255}
 #define yellow (struct color){255,255,0,255}
 
-typedef struct v2 { float x, y; };
+struct v2 { float x, y; };
 struct color { char r, g, b, a; };
+struct data { int start, len; };
 enum type { node, leaf, tile };
 struct frame { int width; int height; unsigned char* pixels; } frame;
-struct node { char name[32], type, is_spawned, is_attached; int x, y, at; struct color c; };
+struct node {
+    char name[32], type, is_spawned, is_attached; int x, y, at, q;
+    struct color c; struct data d;
+};
 struct state {
     struct node scene[count];
     int nodes, frames, spawned;
     char quit, log;
-    char bin[12345];
+    char bin[1234];
 };
 
 struct state s, def;
@@ -39,14 +43,16 @@ int slot() {
     }
     return -1;
 }
-void spawn(struct node n) {
+int spawn(struct node n) {
     int sl = slot();
-    if (sl == -1) return;
+    if (sl == -1) return -1;
     n.is_spawned = 1;
+    n.q = 1;
     s.scene[slot()] = n;
     s.spawned++;
     s.nodes++;
     printf("++%s %i\n", n.name, sl);
+    return sl;
 }
 
 void point(struct frame f, float x, float y, struct color c) {
@@ -62,33 +68,54 @@ void load() {
     fread(&s, sizeof(s), 1, fptr);
     fclose(fptr);
 }
+
+int get_parent(int id, int d) {
+       if (!d) return s.scene[id].at;
+       else return get_parent(s.scene[id].at, d - 1);
+    //   printf("d%i", d);
+}
+
 void init() {
     printf("HELLO!||\n\n\n");
     FILE* fptr = fopen("scene.txt", "rb");
     fread(&s.bin, sizeof(s.bin), 1, fptr);
     fclose(fptr);
-    char w[32], d = 0, cur = 0, is_word = 0;
+    char w[32], d = 0, cur = 0, is_word = 0, depth = 0, ld = 0;
+    int last = 0;
     strcpy(w, "node");
-    for (int i = 0; i < 12345; i++) {
-
+    struct node n = {0};
+    struct node def = {0};
+    for (int i = 0; i < 1234; i++) {
+        n = def;
         if (!s.bin[i]) break;
         if (s.bin[i] == '\r') continue;
         if (s.bin[i] == '\n' && cur==0) continue;
-        w[cur] = s.bin[i];
+        if (s.bin[i] == ' ' && !is_word) { depth++, cur--; };
+        if (s.bin[i] != ' ') { is_word = 1; };
+        if (is_word) w[cur] = s.bin[i];
         cur++;
         if (s.bin[i] == '\n' && cur!=0) {
             w[cur-1] = 0;
-            struct node n;
             n.type = node;
+            n.is_attached = depth>0;
+            printf("\nd%i ld%i\n", depth, ld);
+            if (depth>ld) n.at = last;
+            if (depth==ld) n.at = get_parent(last, 0);
+            if (depth < ld) n.at = get_parent(last, ld-depth);
             strcpy(n.name, w);
-            spawn(n);
+            last = spawn(n);
+            ld = depth;
             cur = 0;
+            depth = 0;
+            is_word = 0;
         };
 
     }
     for (int i = 0; i < count; i++) {
         if (!s.scene[i].is_spawned) continue;
-        printf("%i:%s@%s\n", i, s.scene[i].name, s.scene[s.scene[i].at].name);
+        printf("%i:%s", i, s.scene[i].name);
+        if (s.scene[i].is_attached)  printf("@%s\n", s.scene[s.scene[i].at].name); 
+        else  printf("%s", " ROOT\n");
     }
 };
 

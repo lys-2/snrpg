@@ -14,10 +14,9 @@ scene
   banana_11
   shirt_111
 
-
  seq
   Alph: let's explore
-  Alph: let's buy some stuff
+  Alph: let's get some stuff
 
 
  time_autumn_day
@@ -31,6 +30,11 @@ scene
   cli_monsoon
   env_clear
   beach
+   Alph_p
+   Best_p
+    "Hi!
+   Nar
+   coin
    bike~Ven
    house
     banana fruit_30
@@ -49,8 +53,5 @@ scene
    banana_3
    beast
     stick_+
-  Alph_p
-  Best_p
-   "Hi!
-  Nar
-  coin
+  road
+
