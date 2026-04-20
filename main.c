@@ -20,7 +20,7 @@ struct state {
     struct node scene[count];
     int nodes, frames, spawned;
     char quit, log;
-    char bin[1234];
+    char bin[1234], in[128];
 };
 
 struct state s, def;
@@ -100,8 +100,7 @@ void init() {
             n.is_attached = depth>0;
             printf("\nd%i ld%i\n", depth, ld);
             if (depth>ld) n.at = last;
-            if (depth==ld) n.at = get_parent(last, 0);
-            if (depth < ld) n.at = get_parent(last, ld-depth);
+            if (depth <= ld) n.at = get_parent(last, ld-depth);
             strcpy(n.name, w);
             last = spawn(n);
             ld = depth;
@@ -185,12 +184,20 @@ static HBITMAP frame_bitmap;
 static PAINTSTRUCT ps;
 static WNDCLASS window_class;
 static HWND window_handle;
+HANDLE hConsole;
+HWND consoleWindow;
+
 MSG msg;
 LRESULT CALLBACK wpm(HWND window_handle,
     UINT message, WPARAM wParam, LPARAM lParam) {
 
     int x = LOWORD(lParam);
     int y = frame.height - HIWORD(lParam);
+    if (message == WM_KEYDOWN && wParam == VK_RETURN)
+    {
+        SetForegroundWindow(consoleWindow);
+        SetFocus(consoleWindow);
+    }
 
     if (message == WM_KEYDOWN && wParam == 'R') reset();
     if (message == WM_KEYDOWN && wParam == 'L') load();
@@ -269,8 +276,6 @@ LRESULT CALLBACK wpm(HWND window_handle,
     return 0;
 }
 
-HANDLE hConsole;
-HWND consoleWindow;
 void console() {
     FILE* conin = stdin;
     FILE* conout = stdout;
@@ -281,6 +286,9 @@ void console() {
     freopen_s(&conout, "CONOUT$", "w", stdout);
     freopen_s(&conerr, "CONOUT$", "w", stderr);
     //SetConsoleTitleA("console ");
+}
+void run() {
+    scanf("%128s", s.in);
 }
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
     PSTR pCmdLine, int nCmdShow) {
@@ -319,7 +327,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance,
             SetForegroundWindow(window_handle);
             init();
         }
-
+        
         InvalidateRect(window_handle, NULL, FALSE);
         UpdateWindow(window_handle);
 

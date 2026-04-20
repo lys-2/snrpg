@@ -1,4 +1,4 @@
-scene
+lib
  fun
   select
   move
@@ -9,7 +9,32 @@ scene
   act_1_island
    selector
    mover
-   gear_up
+   gear up
+
+ plants
+  spruce
+  pine
+  birch
+  maple
+  walnut
+  oak
+  linden
+  black locust
+  black cherry
+  apple
+  pear
+
+  coconut
+  banana
+  pineapple
+
+  dandelion
+  daisy
+  cornflower
+  strawberry
+  ryegrass
+
+scene
  price
   banana_11
   shirt_111
@@ -37,7 +62,7 @@ scene
    coin
    bike~Ven
    house
-    banana fruit_30
+    banana_fruit_30
     bag
      pants~Ven
       sell_111
