@@ -10,17 +10,20 @@
 struct v2 { float x, y; };
 struct color { char r, g, b, a; };
 struct data { int start, len; };
+struct tags { char q, tag[8][8]; };
+struct player { int controlled, selected; char is_controlled, is_selected; };
 enum type { node, leaf, tile };
 struct frame { int width; int height; unsigned char* pixels; } frame;
 struct node {
     char name[32], type, is_spawned, is_attached; int x, y, at, q;
-    struct color c; struct data d;
+    struct color c; struct data d; struct tags t;
 };
 struct state {
     struct node scene[count];
     int nodes, frames, spawned;
     char quit, log;
     char bin[1234], in[128];
+    struct player p;
 };
 
 struct state s, def;
@@ -74,13 +77,43 @@ int get_parent(int id, int d) {
        else return get_parent(s.scene[id].at, d - 1);
     //   printf("d%i", d);
 }
+struct tags get_tag(char w[64]) {
+    char is_tag = 0;
+    char tag[8];
+    char cur = 0;
+    struct tags t = {0};
+    for (int i = 0; i < 64; i++) {
+        if (!w[i]) break;
+        if (is_tag) tag[cur] = w[i];
+        if (w[i] == '_') {
+            is_tag = 1;
+            t.q++;
+        };
+        if (w[i] == '_' && is_tag) { 
+            cur = 0; 
+           strcpy(t.tag[t.q], tag);
+        };
+    }
+    return t;
+}
+
+void out() {
+    printf("---\nunit: %s ", s.scene[s.p.controlled].name);
+    printf(" select: %s[%i] ", s.scene[s.p.selected].name, s.p.selected);
+    printf("---\nLC: %s ", s.scene[s.scene[s.p.controlled].at].name);
+}
+void next() {
+    s.p.selected++;
+    s.p.selected %= s.nodes;
+    out();
+}
 
 void init() {
     printf("HELLO!||\n\n\n");
     FILE* fptr = fopen("scene.txt", "rb");
     fread(&s.bin, sizeof(s.bin), 1, fptr);
     fclose(fptr);
-    char w[32], d = 0, cur = 0, is_word = 0, depth = 0, ld = 0;
+    char w[64], d = 0, cur = 0, is_word = 0, depth = 0, ld = 0;
     int last = 0;
     strcpy(w, "node");
     struct node n = {0};
@@ -91,6 +124,8 @@ void init() {
         if (s.bin[i] == '\r') continue;
         if (s.bin[i] == '\n' && cur==0) continue;
         if (s.bin[i] == ' ' && !is_word) { depth++, cur--; };
+        if (s.bin[i] == '^' && !is_word) { s.p.controlled = last + 1; cur--; };
+        if (s.bin[i] == '*' && !is_word) { s.p.selected = last+1; cur--; };
         if (s.bin[i] != ' ') { is_word = 1; };
         if (is_word) w[cur] = s.bin[i];
         cur++;
@@ -102,6 +137,7 @@ void init() {
             if (depth>ld) n.at = last;
             if (depth <= ld) n.at = get_parent(last, ld-depth);
             strcpy(n.name, w);
+            n.t = get_tag(w);
             last = spawn(n);
             ld = depth;
             cur = 0;
@@ -115,8 +151,14 @@ void init() {
         printf("%i:%s", i, s.scene[i].name);
         if (s.scene[i].is_attached)  printf("@%s\n", s.scene[s.scene[i].at].name); 
         else  printf("%s", " ROOT\n");
+        for (int j = 0; j < s.scene[i].t.q; j++) {
+            printf("%s\n", s.scene[i].t.tag[j]);
+        }
     }
+    out();
 };
+
+
 
 void save() {
     FILE* fptr = fopen("save_nr", "wb");
@@ -198,7 +240,7 @@ LRESULT CALLBACK wpm(HWND window_handle,
         SetForegroundWindow(consoleWindow);
         SetFocus(consoleWindow);
     }
-
+    if (message == WM_KEYDOWN && wParam == 'Q') next();
     if (message == WM_KEYDOWN && wParam == 'R') reset();
     if (message == WM_KEYDOWN && wParam == 'L') load();
     if (message == WM_KEYDOWN && wParam == 'J') save();

@@ -2,35 +2,46 @@ lib
  fun
   select
   move
+  spawn
   use
   say
   fight
  prog
-  act_1_island
+  stage 1 island
    selector
    mover
    gear up
 
- plants
+ plant
   spruce
   pine
   larch
   birch
+  alder
+  willow
   maple
   walnut
+  chestnut
   oak
   linden
+  rowan
   black locust
   black cherry
   apple
   pear
-  
+
+  platanus
   almond
   apricot
+  peach
+  sophora
+  ginkgo
 
   eucalyptus
   golden wattle
-
+  copperpod
+  gulmohar
+  mango
   coconut
   banana
   pineapple
@@ -40,6 +51,19 @@ lib
   cornflower
   strawberry
   ryegrass
+  tulip
+
+beast
+ bird
+  chiffchaff
+  chaffinch
+  robin
+  thrush
+  blackbird
+  nightingale
+  corncrake
+  awebo
+  peacock
 
 scene
  price
@@ -50,25 +74,23 @@ scene
   Alph: let's explore
   Alph: let's get some stuff
 
-
  time_autumn_day
  city
   district
    street
     block
      flat
-      room
- island
+      room_l
+ island_l
   cli_monsoon
   env_clear
-  beach
-   Alph_p
-   Best_p
+  beach_l
+   ^Alph_c_s
+   Best
     "Hi!
-   Nar
    coin
-   bike~Ven
-   house
+   *bike~Ven
+   house_l
     banana_fruit_30
     bag
      pants~Ven
@@ -78,12 +100,12 @@ scene
     Ven
      pants
      shirt
-  grove
+  grove_l
    stick
    palm_99
    grass_999
    banana_3
    beast
     stick_+
-  road
+  road_l
 
