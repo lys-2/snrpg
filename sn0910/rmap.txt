@@ -1,0 +1,34 @@
+type
+ wall
+ box
+ tree
+
+ren
+ point
+ line
+ box
+ text
+
+coll
+ point_circle
+ boint_box
+ line_box
+
+bar
+ reg s16:name s16:pw
+ login s16:name s16:pw
+ create s16:name i:class
+ join i:id
+ quit
+ say s64:msg
+ select i:id
+ touch i:id
+ forward c:v
+ right c:v
+ rot c:v
+ return
+ 
+ spawn i:type t:trans id:at
+ move i:type t:trans id:at
+
+ reset
