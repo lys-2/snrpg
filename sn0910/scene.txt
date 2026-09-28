@@ -1,34 +1,68 @@
 ui
-quest
- explore_1
- talk_1
- fight_1
 class
  rogue
  fighter
+pose
+ idle
+ walk
+ sit
+ talk
+tom
+ inv
+  *key
+  *coin%12345
+ body
+  *pants
+  upper
+   neck
+    *shirt
+    *jacket
+    h1
+     h2
+      h3
+       *glove
+       *stick
+    h1
+     h2
+      h3
+    head
+  l1
+   l2
+    l3
+     *shoe
+  l1
+   l2
+    l3
+     *shoe
 stats
  str
  dex
  int
-scene
- map
-  woods
-   trope
-    ^wood_elf
-   *tree
-   dungeon
-  road
-   tower
-    floor1
+beast
+quest
+ EX1
+ TK1
+ FT1
+map
+ woods
+  cabin
+  pool
+   deep
+  trope
+   ^wood_elf
+  *tree
+  dungeon
+ road
+  tower
+   floor1
     floor2
-    floor8
-    roof
-  plain
-   dungeon
-  town
-   street
-    start
-    house
-     room
-      _box
-       *key
+     floor8
+      roof
+ plain
+  dungeon
+ street
+  start
+  house
+   room
+    _box
+     *key

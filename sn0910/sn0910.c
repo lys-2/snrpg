@@ -1,7 +1,7 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <stdio.h>
 #include <string.h>
-#define count 123
+#define count 1234
 
 struct set { int i[count]; int len; };
 char input[16], name[16], pw[16], msg[128], path[128]; struct set set, set_def;
@@ -38,7 +38,6 @@ int get_by_name(char name[64]) {
 }
 char* get_path(int id) {
 	path[0] = 0;
-	strcat(path, "../");
 	strcat(path, s.scene[s.scene[id].at].name);
 	strcat(path, "/");
 	strcat(path, s.scene[id].name);
