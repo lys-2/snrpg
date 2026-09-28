@@ -3,24 +3,67 @@
 #include <string.h>
 #define count 123
 
-char input[16], name[16], pw[16], msg[64];
+struct set { int i[count]; int len; };
+char input[16], name[16], pw[16], msg[128], path[128]; struct set set, set_def;
 int i;
-enum class { rogue, mage, fighter };
-enum type {node, user, character, box, wall, tree};
-struct node { 
+enum class2 { rogue, mage, fighter };
+enum type { node, user, character, box, wall, tree, location, container, item };
+struct node {
 	char name[16]; char pw[16]; enum type t; enum class class;
-	char is_spawned, is_owned; int at;
+	char is_spawned, is_owned, is_root, depth; int at, owner, link;
 };
-struct state { struct node scene[count]; int cur, session; char is_logged; };
+struct state {
+	struct node scene[count];
+	int cur, session, controller, selection;
+	char is_logged, is_joined, is_selected, bin[12345];
+};
 struct state s, def;
 
-int spawn(struct node n) { 
+int spawn(struct node n) {
 	n.is_spawned = 1;
-	n.pw[0] = 0;
 	s.scene[s.cur] = n;
-	s.cur++; };
+	s.cur++;
+	return s.cur - 1;
+};
+int get_parent(int id, int d) {
+	if (!d) return s.scene[id].at;
+	else return get_parent(s.scene[id].at, d - 1);
+	//   printf("d%i", d);
+}
+int get_by_name(char name[64]) {
+	for (int i = 0; i < count; i++) {
+		if (!strcmp(s.scene[i].name, name)) { return i; }
+	}
+	return -1;
+}
+char* get_path(int id) {
+	path[0] = 0;
+	strcat(path, "../");
+	strcat(path, s.scene[s.scene[id].at].name);
+	strcat(path, "/");
+	strcat(path, s.scene[id].name);
 
-void reg(char name[16], char pw[16]) { 
+	return path;
+}
+struct set get_reach(int id) {
+	set = set_def;
+	set.i[set.len] = s.scene[id].at;
+	set.len++;
+	return set;
+}
+char is_reach(int id) {
+	if (s.scene[id].is_root) return 0;
+	if (
+		s.scene[id].at == s.scene[s.controller].at ||
+		get_parent(s.scene[s.controller].at, 0) == id ||
+		s.scene[s.controller].at == id
+		)
+	{
+		return 1;
+	}
+	return 0;
+}
+void reg(char name[16], char pw[16]) {
 	for (int i = 0; i < count; i++) {
 		if (s.scene[i].t != user) continue;
 		if (!strcmp(s.scene[i].name, name)) return;
@@ -41,21 +84,116 @@ void login(char name[16], char pw[16]) {
 	}
 };
 
-void create(char name[16], enum class c) {
+int create(char name[16], enum class2 c) {
+	if (!s.is_logged) return;
 	struct node n;
 	n.t = character;
+	n.is_owned = 1;
+	n.owner = s.session;
+	n.class = c;
 	strcpy(n.name, name);
-	
-	spawn(n);
+	int r = spawn(n);
+	return r;
+}
+void join(int id) {
+	if (s.scene[id].is_spawned && s.scene[id].owner == s.session
+		&& s.scene[id].t == character
+		) {
+		s.controller = id;
+		s.is_joined = 1;
+		s.scene[id].at = s.scene[get_by_name("start")].at;
+	}
+}
+void say(char msg[128]) {
+	if (!s.is_joined) return;
+	printf("\n%s\n", msg);
+}
+void select(int id) {
+	if (!s.is_joined) return;
+	s.is_selected = 1;
+	s.selection = id;
+}
+void move(int id) {
+	if (!s.is_joined) return;
+	if (s.scene[id].t != location) return;
+	if (!is_reach(id)) return;
+	s.scene[s.controller].at = id;
+}
+void scene() {
+	FILE* fptr = fopen("scene.txt", "rb");
+	if (fptr) {
+		fread(&s.bin, sizeof(s.bin), 1, fptr);
+		fclose(fptr);
+	}
+	printf("%s\n", s.bin);
+	char w[64], d = 0, cur = 0, is_word = 0, depth = 0, ld = 0;
+	int last = 0;
+	strcpy(w, "node");
+	struct node n = { 0 };
+	struct node def = { 0 };
+	for (int i = 0; i < 12345; i++) {
+		n = def;
+		if (!s.bin[i]) break;
+		if (s.bin[i] == '\r') continue;
+		if (s.bin[i] == '\n' && cur == 0) continue;
+		if (s.bin[i] == ' ' && !is_word) { depth++, cur--; };
+		if (s.bin[i] != ' ') { is_word = 1; };
+		if (is_word) w[cur] = s.bin[i];
+		cur++;
+		if (s.bin[i] == '\n' && cur != 0) {
+			w[cur - 1] = 0;
+			n.is_root = depth == 0;
+			n.depth = depth;
+			if (depth > ld) n.at = last;
+			if (depth <= ld) n.at = get_parent(last, ld - depth);
+			strcpy(n.name, w);
+			n.t = location;
+			if (n.name[0] == '^') n.t = character;
+			if (n.name[0] == '_') n.t = container;
+			if (n.name[0] == '*') n.t = item;
+			last = spawn(n);
+			ld = depth;
+			cur = 0;
+			depth = 0;
+			is_word = 0;
+		};
+	};
 }
 
 int main() {
+
+	scene();
+
+	reg("USER", "asd");
+	login("USER", "asd");
+	int n = create("Player", rogue);
+	join(n);
+	select(22);
+
 	while (1) {
-		printf("Hi! try (r)egister (l)ogin (c)reate (j)oin sa(y) selec(t) \n");
-if (s.is_logged) printf("~~ logged as %s[%i]! \n", s.scene[s.session].name, s.session);
-		for (int i = 0; i < count; i++) {
-			if (!s.scene[i].is_spawned) continue;
-			printf("%s %s %i\n", s.scene[i].name, s.scene[i].pw, s.scene[i].t);
+		printf("Hi! actions: (r)egister (l)ogin (c)reate (j)oin sa(y) selec(t) (m)ove \n");
+		if (s.is_logged) printf("~~ logged as %s[%i]! \n", s.scene[s.session].name, s.session);
+		if (s.is_joined) printf("~~ playing as %s[%i]! \n",
+			s.scene[s.controller].name, s.controller);
+		if (s.is_joined) printf("Location: %s[%i]\n",
+			get_path(s.scene[s.controller].at), s.scene[s.controller].at);
+		if (s.is_joined) {
+			struct set set = get_reach(s.controller);
+			printf("Reach: ");
+			for (int i = 0; i < count; i++) {
+				if (is_reach(i))	printf(" %s[%i] ", s.scene[i].name, i);
+			}
+			printf("\n");
+		}
+		if (s.is_selected) printf("Selection: %s[%i]\n", s.scene[s.selection].name, s.selection);
+		if (!s.is_joined) {
+			for (int i = 0; i < count; i++) {
+				if (!s.scene[i].is_spawned) continue;
+				if (s.scene[i].t == user)
+					printf("%s %s USER\n", s.scene[i].name, s.scene[i].pw);
+				if (s.scene[i].t == character)
+					printf("%s[%i] CHAR\n", s.scene[i].name, i);
+			}
 		}
 		printf("::");
 		scanf("%s", &input);
@@ -83,12 +221,34 @@ if (s.is_logged) printf("~~ logged as %s[%i]! \n", s.scene[s.session].name, s.se
 			scanf("%s", &name);
 			printf("Class 0:rogue 1:mage 2:fighter ");
 			int r = scanf("%i", &i);
-			if (r==1)
-			create(name, i);
+			if (r == 1) create(name, i);
+		}
+
+		if (!strcmp(input, "j")) {
+			printf("Join \n");
+			printf(" character id: ");
+			int r = scanf("%i", &i);
+			if (r == 1) join(i);
+		}
+		if (!strcmp(input, "y")) {
+			printf("Say: \n");
+			int r = scanf("%s", &msg);
+			say(msg);
+		}
+		if (!strcmp(input, "t")) {
+			printf("Select: \n");
+			int r = scanf("%i", &i);
+			if (r == 1) select(i);
+		}
+		if (!strcmp(input, "m")) {
+			printf("Move: \n");
+			int r = scanf("%i", &i);
+			if (r == 1) move(i);
 		}
 		input[0] = 0;
 		name[0] = 0;
 		pw[0] = 0;
+		msg[0] = 0;
 		i = 0;
 	};
 };
