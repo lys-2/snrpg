@@ -1,4 +1,27 @@
 ui
+talk
+ ~Hey there! ~........,,,,,,///_____________                                    ____________________________     -    - -  - 
+ ~hello
+compose
+ sunny-player-around
+  day
+  clear
+  happy
+  player
+topic
+ Alice
+  greet
+  explain
+  talk
+  class
+  pose
+  tom
+  stick
+ Bob
+  beast
+  stick
+  dungeon
+  store
 class
  rogue
  fighter
@@ -7,7 +30,26 @@ pose
  walk
  sit
  talk
-tom
+Alice
+Bob
+ happy
+ sad
+ day
+  ~Good day!
+ clear
+  ~It's clear!
+ rain
+  ~Raining
+ player
+  ~Hi there
+ turn%0
+  ~Time runs out after 127 turns
+ progress%1
+  ~11 to go
+ sunny-player-around
+  ~Since you're here at the right moment you get this: R%11
+  R%11
+Tom
  inv
   *key
   *coin%12345
@@ -45,7 +87,9 @@ quest
  FT1
 map
  woods
+  ^Bob
   cabin
+  hut
   pool
    deep
   trope
@@ -61,7 +105,8 @@ map
  plain
   dungeon
  street
-  start
+  *start
+  ^Alice
   house
    room
     _box

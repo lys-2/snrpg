@@ -2,15 +2,18 @@
 #include <stdio.h>
 #include <string.h>
 #define count 1234
+#define route 12
+#define turns 127
 
 struct set { int i[count]; int len; };
 char input[16], name[16], pw[16], msg[128], path[128]; struct set set, set_def;
 int i;
 enum class2 { rogue, mage, fighter };
-enum type { node, user, character, box, wall, tree, location, container, item };
+enum type { node, user, character, box, wall, tree, location, container, item, talk };
 struct node {
-	char name[16]; char pw[16]; enum type t; enum class class;
-	char is_spawned, is_owned, is_root, depth; int at, owner, link;
+	char name[256]; char pw[16]; enum type t; enum class class;
+	char is_spawned, is_owned, is_root, depth, progress, turn;
+	int at, owner, link;
 };
 struct state {
 	struct node scene[count];
@@ -51,7 +54,7 @@ struct set get_reach(int id) {
 	return set;
 }
 char is_reach(int id) {
-	if (s.scene[id].is_root) return 0;
+	if (s.scene[id].is_root && strcmp(s.scene[id].name, "map")) return 0;
 	if (
 		s.scene[id].at == s.scene[s.controller].at ||
 		get_parent(s.scene[s.controller].at, 0) == id ||
@@ -62,6 +65,9 @@ char is_reach(int id) {
 	}
 	return 0;
 }
+
+void on_reach(int id) { printf("R \n"); }
+
 void reg(char name[16], char pw[16]) {
 	for (int i = 0; i < count; i++) {
 		if (s.scene[i].t != user) continue;
@@ -100,7 +106,7 @@ void join(int id) {
 		) {
 		s.controller = id;
 		s.is_joined = 1;
-		s.scene[id].at = s.scene[get_by_name("start")].at;
+		s.scene[id].at = s.scene[get_by_name("*start")].at;
 	}
 }
 void say(char msg[128]) {
@@ -117,6 +123,9 @@ void move(int id) {
 	if (s.scene[id].t != location) return;
 	if (!is_reach(id)) return;
 	s.scene[s.controller].at = id;
+	for (int i = 0; i < count; i++) {
+		if (is_reach(i)) on_reach(id);
+	}
 }
 void scene() {
 	FILE* fptr = fopen("scene.txt", "rb");
@@ -125,7 +134,7 @@ void scene() {
 		fclose(fptr);
 	}
 	printf("%s\n", s.bin);
-	char w[64], d = 0, cur = 0, is_word = 0, depth = 0, ld = 0;
+	char w[256], d = 0, cur = 0, is_word = 0, depth = 0, ld = 0;
 	int last = 0;
 	strcpy(w, "node");
 	struct node n = { 0 };
@@ -150,6 +159,7 @@ void scene() {
 			if (n.name[0] == '^') n.t = character;
 			if (n.name[0] == '_') n.t = container;
 			if (n.name[0] == '*') n.t = item;
+			if (n.name[0] == '~') n.t = talk;
 			last = spawn(n);
 			ld = depth;
 			cur = 0;
@@ -167,13 +177,15 @@ int main() {
 	login("USER", "asd");
 	int n = create("Player", rogue);
 	join(n);
-	select(22);
 
 	while (1) {
 		printf("Hi! actions: (r)egister (l)ogin (c)reate (j)oin sa(y) selec(t) (m)ove \n");
 		if (s.is_logged) printf("~~ logged as %s[%i]! \n", s.scene[s.session].name, s.session);
-		if (s.is_joined) printf("~~ playing as %s[%i]! \n",
-			s.scene[s.controller].name, s.controller);
+		if (s.is_joined) printf("~~ playing as %s[%i]! progress:%i/%i turns:%i/%i\n",
+			s.scene[s.controller].name, s.controller,
+			s.scene[s.controller].progress, route,
+			s.scene[s.controller].turn, turns
+		);
 		if (s.is_joined) printf("Location: %s[%i]\n",
 			get_path(s.scene[s.controller].at), s.scene[s.controller].at);
 		if (s.is_joined) {
@@ -194,9 +206,12 @@ int main() {
 					printf("%s[%i] CHAR\n", s.scene[i].name, i);
 			}
 		}
+		for (int i = 0; i < 8; i++) {
+			printf("LOG %i\n", 8-i-1);
+		}
 		printf("::");
 		scanf("%s", &input);
-		printf("~%s!\n", input);
+		// printf("~%s!\n", input);
 
 		if (!strcmp(input, "r")) {
 			printf("register new user \n");
@@ -249,5 +264,8 @@ int main() {
 		pw[0] = 0;
 		msg[0] = 0;
 		i = 0;
+		s.scene[s.controller].turn++;
+		printf("~~~~~~~~~~~~\n\n");
+
 	};
 };
