@@ -2,8 +2,14 @@
 #include <stdio.h>
 #include <string.h>
 #define count 1234
-#define route 12
-#define turns 127
+#define score 12
+#define turns 24
+
+//
+
+
+
+//
 
 struct set { int i[count]; int len; };
 char input[16], name[16], pw[16], msg[128], path[128]; struct set set, set_def;
@@ -12,7 +18,7 @@ enum class2 { rogue, mage, fighter };
 enum type { node, user, character, box, wall, tree, location, container, item, talk };
 struct node {
 	char name[256]; char pw[16]; enum type t; enum class class;
-	char is_spawned, is_owned, is_root, depth, progress, turn;
+	char is_spawned, is_owned, is_root, depth, progress, turn, hp;
 	int at, owner, link;
 };
 struct state {
@@ -20,7 +26,8 @@ struct state {
 	int cur, session, controller, selection;
 	char is_logged, is_joined, is_selected, bin[12345];
 };
-struct state s, def;
+struct state s, def = {0};
+void reset();
 
 int spawn(struct node n) {
 	n.is_spawned = 1;
@@ -28,6 +35,7 @@ int spawn(struct node n) {
 	s.cur++;
 	return s.cur - 1;
 };
+
 int get_parent(int id, int d) {
 	if (!d) return s.scene[id].at;
 	else return get_parent(s.scene[id].at, d - 1);
@@ -54,6 +62,7 @@ struct set get_reach(int id) {
 	return set;
 }
 char is_reach(int id) {
+	if (!s.scene[id].is_spawned) return 0;
 	if (s.scene[id].is_root && strcmp(s.scene[id].name, "map")) return 0;
 	if (
 		s.scene[id].at == s.scene[s.controller].at ||
@@ -91,7 +100,7 @@ void login(char name[16], char pw[16]) {
 
 int create(char name[16], enum class2 c) {
 	if (!s.is_logged) return;
-	struct node n;
+	struct node n = {0};
 	n.t = character;
 	n.is_owned = 1;
 	n.owner = s.session;
@@ -119,6 +128,7 @@ void select(int id) {
 	s.selection = id;
 }
 void move(int id) {
+	if (!s.scene[i].is_spawned) return;
 	if (!s.is_joined) return;
 	if (s.scene[id].t != location) return;
 	if (!is_reach(id)) return;
@@ -127,13 +137,40 @@ void move(int id) {
 		if (is_reach(i)) on_reach(id);
 	}
 }
+
+void take(int id) { 
+	if (!s.scene[id].is_spawned) return;
+	if (!s.is_joined) return;
+	if (s.scene[id].t != item) return;
+	if (!is_reach(id)) return;
+	if (strcmp(s.scene[id].name, "*coin")) return;
+	s.scene[s.controller].progress+=1;
+	printf("took a coin |+1\n");
+
+	s.scene[id].is_spawned = 0;
+}
+void fight(int id) {
+	if (!s.scene[id].is_spawned) return;
+	if (!s.is_joined) return;
+	if (!is_reach(id)) return;
+	if (strcmp(s.scene[id].name, "*dummy")) return;
+	s.scene[s.controller].progress += 2;
+	printf("fought a dummy |+2\n");
+	s.scene[id].is_spawned = 0;
+}
+
+void process() {
+	if (s.scene[s.controller].progress == score) { reset(); printf("\nYou win!\n\n"); }
+	if (s.scene[s.controller].turn == turns) { reset(); printf("\nYou loose!\n\n"); }
+}
+
 void scene() {
 	FILE* fptr = fopen("scene.txt", "rb");
 	if (fptr) {
 		fread(&s.bin, sizeof(s.bin), 1, fptr);
 		fclose(fptr);
 	}
-	printf("%s\n", s.bin);
+	//printf("%s\n", s.bin);
 	char w[256], d = 0, cur = 0, is_word = 0, depth = 0, ld = 0;
 	int last = 0;
 	strcpy(w, "node");
@@ -169,21 +206,28 @@ void scene() {
 	};
 }
 
-int main() {
+void reset() {
 
+	s = def;
 	scene();
-
 	reg("USER", "asd");
 	login("USER", "asd");
-	int n = create("Player", rogue);
-	join(n);
+	int nd = create("rogue3", rogue);
+	join(nd);
+
+}
+
+
+int main() {
+	reset();
 
 	while (1) {
-		printf("Hi! actions: (r)egister (l)ogin (c)reate (j)oin sa(y) selec(t) (m)ove \n");
+		printf(
+			"Hi! actions: (r)egister (l)ogin (c)reate (j)oin sa(y) selec(t) (m)ove ta(k)e (f)ight \n");
 		if (s.is_logged) printf("~~ logged as %s[%i]! \n", s.scene[s.session].name, s.session);
-		if (s.is_joined) printf("~~ playing as %s[%i]! progress:%i/%i turns:%i/%i\n",
+		if (s.is_joined) printf("~~ playing as %s[%i]! score:%i/%i turns:%i/%i\n",
 			s.scene[s.controller].name, s.controller,
-			s.scene[s.controller].progress, route,
+			s.scene[s.controller].progress, score,
 			s.scene[s.controller].turn, turns
 		);
 		if (s.is_joined) printf("Location: %s[%i]\n",
@@ -259,6 +303,19 @@ int main() {
 			int r = scanf("%i", &i);
 			if (r == 1) move(i);
 		}
+		if (!strcmp(input, "k")) {
+			printf("Take: \n");
+			int r = scanf("%i", &i);
+			if (r == 1) take(i);
+		}
+		if (!strcmp(input, "f")) {
+			printf("Fight: \n");
+			int r = scanf("%i", &i);
+			if (r == 1) fight(i);
+		}
+		if (!strcmp(input, "e")) {
+			reset();
+		}
 		input[0] = 0;
 		name[0] = 0;
 		pw[0] = 0;
@@ -266,6 +323,8 @@ int main() {
 		i = 0;
 		s.scene[s.controller].turn++;
 		printf("~~~~~~~~~~~~\n\n");
+
+		process();
 
 	};
 };

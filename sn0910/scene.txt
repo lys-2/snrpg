@@ -7,7 +7,8 @@ compose
   day
   clear
   happy
-  player
+  reach
+   player
 topic
  Alice
   greet
@@ -87,6 +88,7 @@ quest
  FT1
 map
  woods
+  *dummy
   ^Bob
   cabin
   hut
@@ -96,18 +98,25 @@ map
    ^wood_elf
   *tree
   dungeon
+   *dummy
  road
+  *dummy
   tower
    floor1
     floor2
      floor8
       roof
+       *coin
  plain
   dungeon
  street
   *start
+  *coin
+  *coin
+  *dummy
   ^Alice
   house
    room
+    *coin
     _box
      *key
